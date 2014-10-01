@@ -1,0 +1,15 @@
+This is a list of stuff I want to do. If you see something here and it
+seems neat, feel free to work on it. If you're worried I might be in the
+middle of something I'm probably not. :) If you want to make sure before
+you start working just drop me an email. 
+
+Key:
+* Feature
+! Bug
+
+Zach White <zwhite@darkstar.frop.org>
+
+* Implement IRC Server functionality
+* Implement connections to multiple IRC servers
+* Implement system for configuring the connections
+* Web interface for viewing/interacting with your IRC session
