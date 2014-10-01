@@ -1,0 +1,38 @@
+#!/usr/bin/env python
+"""
+  IRC connection manager (bouncer).
+"""
+from sys import stdout
+
+from twisted.internet import reactor
+from twisted.python import log
+from twisted.python.logfile import DailyLogFile
+from twisted.words.protocols import irc
+
+
+# Add some numerics that twisted is missing
+irc.symbolic_to_numeric['RPL_STATSCONN'] = '250'
+irc.symbolic_to_numeric['RPL_LUSERSC'] = '265'
+irc.symbolic_to_numeric['RPL_LUSERSG'] = '266'
+irc.symbolic_to_numeric['RPL_MOTD_ALT1'] = '377'
+irc.symbolic_to_numeric['RPL_MOTD_ALT2'] = '378'
+
+irc.numeric_to_symbolic = {}
+for k, v in irc.symbolic_to_numeric.items():
+    irc.numeric_to_symbolic[v] = k
+
+
+if __name__ == '__main__':
+    from pnc.irc_client.factory import PNCFactory
+
+    # Setup logging
+    log.startLogging(stdout)
+    log.startLogging(DailyLogFile.fromFullPath('pnc.log'))
+
+    # Build our factories. We have to create the dictionary first so we can
+    # pass factories in when we instaniate a factory.
+    factories = {}
+    factories['irc_client'] = PNCFactory(factories, 'skullY_PNC')
+
+    reactor.connectTCP('localhost', 2222, factories['irc_client'])
+    reactor.run()
