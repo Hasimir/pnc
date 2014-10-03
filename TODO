@@ -9,7 +9,7 @@ Key:
 
 Zach White <zwhite@darkstar.frop.org>
 
-* Implement IRC Server functionality
+! PRIVMSGs between the upstream and downstream aren't very reliable
 * Implement connections to multiple IRC servers
 * Implement system for configuring the connections
 * Web interface for viewing/interacting with your IRC session

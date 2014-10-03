@@ -6,27 +6,28 @@ from twisted.python import log
 from pnc.irc_client.client import PNCClient
 
 
-class PNCFactory(protocol.ClientFactory):
+class PNCClientFactory(protocol.ClientFactory):
     """A factory for IRC connections.
     """
+    connection_attempts = 0
+    connection_attempt_limit = 5
+    irc_protocol = None
+    sourceURL = 'http://pnc.frop.org/'
+
     def __init__(self, factories, nickname, realname='PNC User', username=None, password=None):
         self.factories = factories
-        self.connection_attempts = 0
-        self.connection_attempt_limit = 5
-        self.sourceURL = 'http://pnc.frop.org/'
-        self.erroneousNickFallback = '_' + nickname
-
-        # Options the user can set
         self.nickname = nickname
         self.realname = realname
         self.username = username
         self.password = password
+        self.erroneousNickFallback = '_' + nickname
 
     def buildProtocol(self, address):
         """Build our IRC connection.
         """
         self.irc_protocol = PNCClient(self.factories)
         self.irc_protocol.factory = self
+        self.irc_protocol.downstream = self.factories['irc_server'].irc_protocol
 
         # Set the various connection attributes
         self.irc_protocol.hostname = None

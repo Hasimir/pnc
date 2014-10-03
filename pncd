@@ -23,7 +23,11 @@ for k, v in irc.symbolic_to_numeric.items():
 
 
 if __name__ == '__main__':
-    from pnc.irc_client.factory import PNCFactory
+    from pnc.irc_client.factory import PNCClientFactory
+    from pnc.irc_server.factory import PNCServerFactory
+
+    # Configuration
+    nickname = 'skullY_PNC'
 
     # Setup logging
     log.startLogging(stdout)
@@ -31,8 +35,10 @@ if __name__ == '__main__':
 
     # Build our factories. We have to create the dictionary first so we can
     # pass factories in when we instaniate a factory.
-    factories = {}
-    factories['irc_client'] = PNCFactory(factories, 'skullY_PNC')
+    factories = {'irc_client': None, 'irc_server': None}
+    factories['irc_client'] = PNCClientFactory(factories, nickname)
+    factories['irc_server'] = PNCServerFactory(factories, nickname)
 
+    reactor.listenTCP(3333, factories['irc_server'])
     reactor.connectTCP('localhost', 2222, factories['irc_client'])
     reactor.run()

@@ -23,13 +23,15 @@ class PNCMessageMixin:
         else:
             log.msg('-%s:%s- %s' % (user, channel, message))
 
-    def privmsg(self, user, channel, message):
+    def privmsg(self, user, target, message):
         """Called when the client receives a message.
         """
-        if channel == self.nickname:
+        self.downstream.sendMessage('PRIVMSG', target, ':' + message, prefix=user)
+
+        if target == self.nickname:
             log.msg('*%s* %s' % (user, message))
         else:
-            log.msg('<%s:%s> %s' % (user, channel, message))
+            log.msg('<%s:%s> %s' % (user, target, message))
 
     def action(self, user, channel, msg):
         """Called when the client sees someone do an action.
