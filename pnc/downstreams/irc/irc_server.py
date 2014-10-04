@@ -1,33 +1,28 @@
+from pnc.config import config
 from pnc.message import upstream_privmsg
 from twisted.python import log
 from twisted.words.protocols import irc
 
 
-class IRCServer(irc.IRC):
+class IRCServer(config, irc.IRC):
     """Support some replies that twisted doesn't support by default
     """
-    hostname = None
-    password = None
-    realname = None
-    username = None
     registered = False
 
     def sendServerMessage(self, command, *parameter_list):
-        self.sendMessage(command, *parameter_list, prefix='darkstar.frop.org')  # FIXME: Don't hardcode darkstar
+        self.sendMessage(command, *parameter_list, prefix=self.servername)  # FIXME: Don't hardcode darkstar
 
     def sendReply(self, numeric, *parameter_list):
-        self.sendMessage(numeric, self.nickname, *parameter_list, prefix='darkstar.frop.org')
+        self.sendMessage(numeric, self.nickname, *parameter_list, prefix=self.servername)
 
     def sendPRIVMSG(self, source, target, message):
-        print 'IRCServer: Sending PRIVMSG %s->%s (%s)' % (source, target, message)
         self.sendMessage('PRIVMSG', target, ':' + message, prefix=source)
-        print 'IRCServer: Sent PRIVMSG'
 
     def connectionMade(self):
-        log.msg('*** client %s connected' % self.hostname)
+        log.msg('Connection from %s' % self.address.host)
 
     def connectionLost(self, reason):
-        log.msg('*** %s!%s@%s has disconnected' % (self.nickname, self.username, self.hostname))
+        log.msg('%s!%s@%s has disconnected' % (self.nickname, self.username, self.hostname))
 
     def irc_PASS(self, prefix, command, params):
         """Password message -- Register a password.
@@ -43,7 +38,7 @@ class IRCServer(irc.IRC):
             self.password = params[-1]
         else:
             # FIXME: This should send the proper error numeric
-            self.privmsg('darkstar.frop.org', self.nickname, 'Password invalid!')
+            self.privmsg(self.servername, self.nickname, 'Password invalid!')
             self.transport.loseConnection()
             return
 
@@ -68,9 +63,9 @@ class IRCServer(irc.IRC):
 
             # Send the server connect messages
             self.sendReply(irc.RPL_WELCOME, ':Welcome to PNC!')
-            self.sendReply(irc.RPL_YOURHOST, ':Your host is darkstar.frop.org[darkstar.frop.org/3333], running version 0.0.1.')  # FIXME: Don't hardcode this
+            self.sendReply(irc.RPL_YOURHOST, ':Your host is %s[%s/3333], running version 0.0.1.' % (self.servername, self.servername))  # FIXME: Don't hardcode this
             self.sendReply(irc.RPL_CREATED, ':This server was created today.')  # FIXME: Replace today with the date/time we started
-            self.sendReply(irc.RPL_MYINFO, 'darkstar.frop.org', '0.0.1', 'iw', 'lnst')  # FIXME: Don't hardcode this
+            self.sendReply(irc.RPL_MYINFO, self.servername, '0.0.1', 'iw', 'lnst')  # FIXME: Don't hardcode this
             # FIXME: Implement RPL_ISUPPORT here
             self.sendReply(irc.RPL_LUSERCLIENT, ':There are 1 users and 1 invisible on 1 servers')  # FIXME
             self.sendReply(irc.RPL_LUSEROP, '0', ':IRC Operators online')  # FIXME
@@ -82,9 +77,10 @@ class IRCServer(irc.IRC):
 
             # Send the MOTD
             # FIXME: Make this less broken and hardcoded
-            self.sendReply(irc.RPL_MOTDSTART, ':darkstar.frop.org message of the day')
+            self.sendReply(irc.RPL_MOTDSTART, ':%s MOTD:' % self.servername)
+            self.sendReply(irc.RPL_MOTD, ":NOOOOoooooOOOOOooOOOooOOOOOOOOooo!")
             self.sendReply(irc.RPL_MOTD, ":They're all gonna laugh at you!")
-            self.sendReply(irc.RPL_ENDOFMOTD, ':end message of the day')
+            self.sendReply(irc.RPL_ENDOFMOTD, ':End MOTD')
 
     def irc_USER(self, prefix, params):
         """User message -- Set your realname.
@@ -98,24 +94,21 @@ class IRCServer(irc.IRC):
         """Respond to the USERHOST command.
         """
         log.msg('irc_USERHOST: %s' % params)
-        self.sendReply(irc.RPL_USERHOST, ':%s=-zwhite@darkstar.frop.org' % self.nickname)
+        self.sendReply(irc.RPL_USERHOST, ':%s=-%s@%s' % (self.nickname, self.username, self.servername))
 
     def irc_PING(self, prefix, params):
         """Ping message
 
         Parameters: <server1> [ <server2> ]
         """
-        self.sendServerMessage('PONG', 'darkstar.frop.org', ':' + params[0])
+        self.sendServerMessage('PONG', self.servername, ':' + params[0])
 
     def irc_PRIVMSG(self, prefix, params):
         """
         """
-        log.msg('irc_PRIVMSG: %s' % params)
         target = params[0]
         msg = ' '.join(params[1:])
-        print 'Sending %s->%s msg upstream.' % (target, msg)
-        upstream_privmsg('FEFnet', target, msg)
-        print 'Sent upstream'
+        upstream_privmsg(self.irc_network, target, msg)
 
     def irc_QUIT(self, prefix, params):
         """Quit

@@ -27,9 +27,7 @@ class PNCMessageMixin:
     def privmsg(self, source, target, message):
         """Called when the client receives a message.
         """
-        print 'Sending %s->%s (%s) message downstream.' % (source, target, message)
-        downstream_privmsg('FEFnet', source, target, message)
-        print 'Sent downstream'
+        downstream_privmsg(self.irc_network, source, target, message)
 
         if target == self.nickname:
             log.msg('*%s* %s' % (source, message))

@@ -3,46 +3,28 @@ from time import sleep
 from twisted.internet import protocol, reactor
 from twisted.python import log
 
+from pnc.config import config
 from pnc.message import upstream_connection
-from pnc.irc_client.pnc_client import PNCClient
+from pnc.upstreams.irc.pnc_client import PNCClient
 
 
-class PNCClientFactory(protocol.ClientFactory):
+class PNCClientFactory(config, protocol.ClientFactory):
     """A factory for IRC connections.
     """
     connection_attempts = 0
     connection_attempt_limit = 5
-    irc_protocol = None
     sourceURL = 'http://pnc.frop.org/'
 
-    def __init__(self, nickname, realname='PNC User', username=None, password=None):
-        self.nickname = nickname
-        self.realname = realname
-        self.username = username
-        self.password = password
-        self.erroneousNickFallback = '_' + nickname
+    def __init__(self):
+        self.erroneousNickFallback = '_' + self.nickname
 
     def buildProtocol(self, address):
         """Build our IRC connection.
         """
-        self.irc_protocol = PNCClient(self.nickname)
-        self.irc_protocol.factory = self
+        self.irc_protocol = PNCClient()
+        self.irc_protocol.address = address
 
-        # Set the various connection attributes
-        self.irc_protocol.hostname = None
-        self.irc_protocol.password = None
-        self.irc_protocol.realname = self.realname
-        self.irc_protocol.username = self.username or self.nickname
-
-        # CTCP responses
-        self.irc_protocol.userinfo = None
-        # fingerReply is a callable returning a string, or a str()able object.
-        self.irc_protocol.fingerReply = None
-        self.irc_protocol.versionName = None
-        self.irc_protocol.versionNum = None
-        self.irc_protocol.versionEnv = None
-
-        upstream_connection('FEFnet', self.irc_protocol)
+        upstream_connection(self.irc_network, self.irc_protocol)
         return self.irc_protocol
 
     def clientConnectionLost(self, connector, reason):

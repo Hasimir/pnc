@@ -8,7 +8,8 @@ class PNCLoginMixin:
     We put these into their own class for organization purposes.
     """
     def connectionMade(self):
-        log.msg('Connected to IRC Server')
+        log.msg('Connected to IRC Server %s:%s' 
+            % (self.address.host, self.address.port))
         irc.IRCClient.connectionMade(self)
 
     def connectionLost(self, reason):

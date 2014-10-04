@@ -9,6 +9,7 @@ from twisted.python import log
 from twisted.python.logfile import DailyLogFile
 from twisted.words.protocols import irc
 
+from pnc.config import config
 
 # Add some numerics that twisted is missing
 irc.symbolic_to_numeric['RPL_STATSCONN'] = '250'
@@ -23,22 +24,18 @@ for k, v in irc.symbolic_to_numeric.items():
 
 
 if __name__ == '__main__':
-    from pnc.irc_client.factory import PNCClientFactory
-    from pnc.irc_server.factory import PNCServerFactory
-
-    # Configuration
-    nickname = 'skullY_PNC'
+    from pnc.upstreams.irc.factory import PNCClientFactory
+    from pnc.downstreams.irc.factory import PNCServerFactory
 
     # Setup logging
     log.startLogging(stdout)
     log.startLogging(DailyLogFile.fromFullPath('pnc.log'))
 
-    # Build our factories. We have to create the dictionary first so we can
-    # pass factories in when we instaniate a factory.
-    factories = {'irc_client': None, 'irc_server': None}
-    factories['irc_client'] = PNCClientFactory(nickname)
-    factories['irc_server'] = PNCServerFactory(nickname)
+    # Build our factories.
+    downstream = PNCServerFactory()
+    upstream = PNCClientFactory()
 
-    reactor.listenTCP(3333, factories['irc_server'])
-    reactor.connectTCP('localhost', 2222, factories['irc_client'])
+    # Setup and start our reactor
+    reactor.listenTCP(config.downstream_port, downstream)
+    reactor.connectTCP(config.upstream_host, config.upstream_port, upstream)
     reactor.run()

@@ -1,27 +1,32 @@
 from twisted.python import log
 from twisted.words.protocols import irc
 
-from pnc.irc_client.channel_mixin import PNCChannelMixin
-from pnc.irc_client.ctcp_mixin import PNCCTCPMixin
-from pnc.irc_client.error_mixin import PNCErrorMixin
-from pnc.irc_client.irc_client import IRCClient
-from pnc.irc_client.login_mixin import PNCLoginMixin
-from pnc.irc_client.message_mixin import PNCMessageMixin
+from pnc.config import config
+from pnc.upstreams.irc.channel_mixin import PNCChannelMixin
+from pnc.upstreams.irc.ctcp_mixin import PNCCTCPMixin
+from pnc.upstreams.irc.error_mixin import PNCErrorMixin
+from pnc.upstreams.irc.irc_client import IRCClient
+from pnc.upstreams.irc.login_mixin import PNCLoginMixin
+from pnc.upstreams.irc.message_mixin import PNCMessageMixin
 
 
-class PNCClient(PNCChannelMixin, PNCCTCPMixin, PNCErrorMixin, PNCLoginMixin, PNCMessageMixin, IRCClient):
+class PNCClient(config, PNCChannelMixin, PNCCTCPMixin, PNCErrorMixin, PNCLoginMixin, PNCMessageMixin, IRCClient):
     """The object representing the IRC connection
     """
-    def __init__(self, nickname):
+    # CTCP responses
+    userinfo = 'PNC userinfo'
+    fingerReply = 'PNC fingerReply'
+    versionName = 'PNC versionName'
+    versionNum = 'PNC versionNum'
+    versionEnv = 'PNC versionEnv'
+
+    def __init__(self):
         self.channels = []
-        self.nickname = nickname
 
     def msg(self, target, message, *args, **kwargs):
         """Called to send an IRC message.
         """
-        print 'IRCClient: sending msg %s->%s' % (target, message)
         irc.IRCClient.msg(self, target, message, *args, **kwargs)
-        print 'IRCClient: sent msg'
 
         if target[0] in irc.CHANNEL_PREFIXES:
             log.msg("<%s:%s> %s" % (self.nickname, target, message))
