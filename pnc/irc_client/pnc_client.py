@@ -12,14 +12,16 @@ from pnc.irc_client.message_mixin import PNCMessageMixin
 class PNCClient(PNCChannelMixin, PNCCTCPMixin, PNCErrorMixin, PNCLoginMixin, PNCMessageMixin, IRCClient):
     """The object representing the IRC connection
     """
-    def __init__(self, factories):
+    def __init__(self, nickname):
         self.channels = []
-        self.factories = factories
+        self.nickname = nickname
 
     def msg(self, target, message, *args, **kwargs):
         """Called to send an IRC message.
         """
+        print 'IRCClient: sending msg %s->%s' % (target, message)
         irc.IRCClient.msg(self, target, message, *args, **kwargs)
+        print 'IRCClient: sent msg'
 
         if target[0] in irc.CHANNEL_PREFIXES:
             log.msg("<%s:%s> %s" % (self.nickname, target, message))

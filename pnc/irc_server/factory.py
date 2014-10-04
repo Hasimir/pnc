@@ -1,9 +1,7 @@
-from time import sleep
-
-from twisted.internet import protocol, reactor
-from twisted.python import log
+from twisted.internet import protocol
 
 from pnc.irc_server.irc_server import IRCServer
+from pnc.message import downstream_connect, downstream_disconnect
 
 
 class PNCServerFactory(protocol.ServerFactory):
@@ -11,8 +9,7 @@ class PNCServerFactory(protocol.ServerFactory):
     """
     irc_protocol = None
 
-    def __init__(self, factories, nickname):
-        self.factories = factories
+    def __init__(self, nickname):
         self.nickname = nickname
 
     def buildProtocol(self, address):
@@ -21,6 +18,8 @@ class PNCServerFactory(protocol.ServerFactory):
         self.irc_protocol = IRCServer()
         self.irc_protocol.factory = self
         self.irc_protocol.nickname = self.nickname
-        self.irc_protocol.upstream = self.factories['irc_client'].irc_protocol
 
+        downstream_connect('FEFnet', self.irc_protocol)
         return self.irc_protocol
+
+    # FIXME: Figure out how to handle client disconnects

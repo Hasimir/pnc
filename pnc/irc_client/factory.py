@@ -3,7 +3,8 @@ from time import sleep
 from twisted.internet import protocol, reactor
 from twisted.python import log
 
-from pnc.irc_client.client import PNCClient
+from pnc.message import upstream_connection
+from pnc.irc_client.pnc_client import PNCClient
 
 
 class PNCClientFactory(protocol.ClientFactory):
@@ -14,8 +15,7 @@ class PNCClientFactory(protocol.ClientFactory):
     irc_protocol = None
     sourceURL = 'http://pnc.frop.org/'
 
-    def __init__(self, factories, nickname, realname='PNC User', username=None, password=None):
-        self.factories = factories
+    def __init__(self, nickname, realname='PNC User', username=None, password=None):
         self.nickname = nickname
         self.realname = realname
         self.username = username
@@ -25,13 +25,11 @@ class PNCClientFactory(protocol.ClientFactory):
     def buildProtocol(self, address):
         """Build our IRC connection.
         """
-        self.irc_protocol = PNCClient(self.factories)
+        self.irc_protocol = PNCClient(self.nickname)
         self.irc_protocol.factory = self
-        self.irc_protocol.downstream = self.factories['irc_server'].irc_protocol
 
         # Set the various connection attributes
         self.irc_protocol.hostname = None
-        self.irc_protocol.nickname = self.nickname
         self.irc_protocol.password = None
         self.irc_protocol.realname = self.realname
         self.irc_protocol.username = self.username or self.nickname
@@ -44,6 +42,7 @@ class PNCClientFactory(protocol.ClientFactory):
         self.irc_protocol.versionNum = None
         self.irc_protocol.versionEnv = None
 
+        upstream_connection('FEFnet', self.irc_protocol)
         return self.irc_protocol
 
     def clientConnectionLost(self, connector, reason):

@@ -1,3 +1,4 @@
+from pnc.message import downstream_privmsg
 from twisted.python import log
 
 
@@ -23,20 +24,22 @@ class PNCMessageMixin:
         else:
             log.msg('-%s:%s- %s' % (user, channel, message))
 
-    def privmsg(self, user, target, message):
+    def privmsg(self, source, target, message):
         """Called when the client receives a message.
         """
-        self.downstream.sendMessage('PRIVMSG', target, ':' + message, prefix=user)
+        print 'Sending %s->%s (%s) message downstream.' % (source, target, message)
+        downstream_privmsg('FEFnet', source, target, message)
+        print 'Sent downstream'
 
         if target == self.nickname:
-            log.msg('*%s* %s' % (user, message))
+            log.msg('*%s* %s' % (source, message))
         else:
-            log.msg('<%s:%s> %s' % (user, target, message))
+            log.msg('<%s:%s> %s' % (source, target, message))
 
-    def action(self, user, channel, msg):
+    def action(self, source, channel, msg):
         """Called when the client sees someone do an action.
         """
-        nick, hostmask = user.split('!', 1)
+        nick, hostmask = source.split('!', 1)
         log.msg("* (%s) %s %s" % (channel, nick, msg))
 
     def modeChanged(self, user, channel, set, modes, args):

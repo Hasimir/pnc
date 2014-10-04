@@ -36,8 +36,8 @@ if __name__ == '__main__':
     # Build our factories. We have to create the dictionary first so we can
     # pass factories in when we instaniate a factory.
     factories = {'irc_client': None, 'irc_server': None}
-    factories['irc_client'] = PNCClientFactory(factories, nickname)
-    factories['irc_server'] = PNCServerFactory(factories, nickname)
+    factories['irc_client'] = PNCClientFactory(nickname)
+    factories['irc_server'] = PNCServerFactory(nickname)
 
     reactor.listenTCP(3333, factories['irc_server'])
     reactor.connectTCP('localhost', 2222, factories['irc_client'])

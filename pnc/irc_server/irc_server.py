@@ -1,3 +1,4 @@
+from pnc.message import upstream_privmsg
 from twisted.python import log
 from twisted.words.protocols import irc
 
@@ -16,6 +17,11 @@ class IRCServer(irc.IRC):
 
     def sendReply(self, numeric, *parameter_list):
         self.sendMessage(numeric, self.nickname, *parameter_list, prefix='darkstar.frop.org')
+
+    def sendPRIVMSG(self, source, target, message):
+        print 'IRCServer: Sending PRIVMSG %s->%s (%s)' % (source, target, message)
+        self.sendMessage('PRIVMSG', target, ':' + message, prefix=source)
+        print 'IRCServer: Sent PRIVMSG'
 
     def connectionMade(self):
         log.msg('*** client %s connected' % self.hostname)
@@ -37,7 +43,7 @@ class IRCServer(irc.IRC):
             self.password = params[-1]
         else:
             # FIXME: This should send the proper error numeric
-            self.privmsg('darkstar.frop.org', nickname, 'Password invalid!')
+            self.privmsg('darkstar.frop.org', self.nickname, 'Password invalid!')
             self.transport.loseConnection()
             return
 
@@ -99,7 +105,6 @@ class IRCServer(irc.IRC):
 
         Parameters: <server1> [ <server2> ]
         """
-        #log.msg('irc_PING: %s' % params)
         self.sendServerMessage('PONG', 'darkstar.frop.org', ':' + params[0])
 
     def irc_PRIVMSG(self, prefix, params):
@@ -108,7 +113,9 @@ class IRCServer(irc.IRC):
         log.msg('irc_PRIVMSG: %s' % params)
         target = params[0]
         msg = ' '.join(params[1:])
-        self.upstream.msg(target, msg)
+        print 'Sending %s->%s msg upstream.' % (target, msg)
+        upstream_privmsg('FEFnet', target, msg)
+        print 'Sent upstream'
 
     def irc_QUIT(self, prefix, params):
         """Quit
